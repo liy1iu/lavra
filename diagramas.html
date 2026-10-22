@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lavra: diagramas</title>
+  <link rel="icon" type="image/svg+xml" href="assets/lavraLogoVerde.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="doc">
+  <header class="doc-header">
+    <img class="doc-logo" src="assets/lavraLogotipoVerde.svg" alt="Lavra">
+    <a class="voltar" href="index.html">Voltar ao protótipo</a>
+  </header>
+  <h1>Lavra: diagramas do sistema</h1>
+  <p>Documentação do sistema. Os diagramas usam os mesmos atores, entidades e status do protótipo e do resumo.</p>
+
+  <h2>1. Casos de uso</h2>
+  <p>Quem faz o quê. A avaliação é exclusiva do Produtor e depende da conclusão do atendimento.</p>
+  <div class="box"><pre class="mermaid">
+flowchart LR
+  P["Produtor Rural"]
+  T["Técnico Agrônomo"]
+  subgraph L["Sistema Lavra"]
+    U1(["Cadastrar-se e entrar"])
+    U2(["Abrir solicitação"])
+    U3(["Acompanhar status"])
+    U4(["Avaliar atendimento"])
+    U5(["Ver solicitações recebidas"])
+    U6(["Agendar visita"])
+    U7(["Atualizar status"])
+    U8(["Registrar relatório"])
+  end
+  P --- U1
+  P --- U2
+  P --- U3
+  P --- U4
+  T --- U1
+  T --- U5
+  T --- U6
+  T --- U7
+  T --- U8
+  U4 -. "só após Concluída" .-> U7
+  </pre></div>
+
+  <h2>2. Modelo de dados (DER)</h2>
+  <p>Quatro entidades. Usuário representa Produtor ou Técnico, definido pelo atributo perfil. Cada solicitação tem no máximo uma avaliação.</p>
+  <div class="box"><pre class="mermaid">
+erDiagram
+  USUARIO ||--o{ PROPRIEDADE : possui
+  USUARIO ||--o{ SOLICITACAO : abre
+  USUARIO |o--o{ SOLICITACAO : atende
+  PROPRIEDADE ||--o{ SOLICITACAO : origina
+  SOLICITACAO ||--o| AVALIACAO : recebe
+  USUARIO {
+    int id PK
+    string nome
+    string email UK
+    string perfil
+    boolean consentimento_lgpd
+  }
+  PROPRIEDADE {
+    int id PK
+    string nome
+    decimal area_ha
+    string cultura
+    int produtor_id FK
+  }
+  SOLICITACAO {
+    int id PK
+    string assunto
+    string descricao
+    string urgencia
+    string status
+    date data_visita
+    string relatorio
+    int propriedade_id FK
+    int produtor_id FK
+    int tecnico_id FK
+  }
+  AVALIACAO {
+    int id PK
+    int nota
+    string comentario
+    datetime criada_em
+    int solicitacao_id FK
+  }
+  </pre></div>
+
+  <h2>3. Estados da solicitação</h2>
+  <p>Ciclo de vida que sustenta as regras de negócio. Não é possível pular etapas nem voltar.</p>
+  <div class="box"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> Aberta : Produtor envia
+  Aberta --> Agendada : Técnico agenda visita
+  Agendada --> EmAtendimento : Técnico inicia
+  EmAtendimento --> Concluida : Técnico registra relatório
+  Concluida --> Avaliada : Produtor envia nota
+  Avaliada --> [*]
+  EmAtendimento : Em atendimento
+  Concluida : Concluída
+  </pre></div>
+
+  <h2>4. Fluxo principal (sequência)</h2>
+  <p>Da abertura da solicitação até a avaliação final, como no protótipo.</p>
+  <div class="box"><pre class="mermaid">
+sequenceDiagram
+  actor P as Produtor
+  participant L as Lavra
+  actor T as Técnico
+  P->>L: Abre solicitação com propriedade, assunto e descrição
+  L-->>P: Status Aberta
+  T->>L: Consulta solicitações recebidas
+  T->>L: Agenda visita
+  L-->>P: Status Agendada
+  T->>L: Inicia atendimento
+  T->>L: Conclui com relatório
+  L-->>P: Status Concluída e avaliação liberada
+  P->>L: Envia nota e comentário
+  L-->>T: Status Avaliada
+  </pre></div>
+</div>
+
+<!-- Mermaid carregado do CDN (precisa de internet ao abrir a página) -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+</script>
+</body>
+</html>

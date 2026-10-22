@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lavra: protótipo</title>
+  <link rel="icon" type="image/svg+xml" href="assets/lavraLogoVerde.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="bar">
+    <span>Demonstração com dados fictícios</span>
+    <span id="crumb"></span>
+    <a class="diagram-link" href="diagramas.html">Ver diagramas</a>
+  </div>
+
+  <div class="phone">
+
+    <!-- CABEÇALHO (aparece em todas as telas) -->
+    <header class="top">
+      <div class="brand">
+        <span id="logo" class="sr-only" aria-hidden="true"></span>
+        <img class="logo-img" src="assets/lavraLogotipoBranca.svg" alt="Lavra">
+      </div>
+      <div class="account">
+        <div class="avatar"><span id="iniciais" class="hidden"></span></div>
+        <span id="topo-sub" class="account-name">Gestão da Assistência Rural</span>
+        <button id="btn-sair" class="hidden" onclick="sair()">Sair</button>
+      </div>
+    </header>
+
+    <!-- TELA 1: LOGIN E CADASTRO -->
+    <main id="tela-login" class="body tela">
+      <div class="hero">
+        <img class="hero-watermark" src="assets/lavraLogoVerde.svg" alt="" aria-hidden="true">
+        <h2>Ajuda técnica para sua propriedade</h2>
+        <p>Peça orientação, acompanhe o atendimento e avalie o serviço.</p>
+      </div>
+      <div class="row">
+        <button id="aba-entrar" class="btn" onclick="abas('entrar')">Entrar</button>
+        <button id="aba-cadastro" class="btn alt" onclick="abas('cadastro')">Cadastrar</button>
+      </div>
+
+      <div id="form-entrar" class="tela">
+        <p class="sub profile-prompt">Como você quer entrar?</p>
+        <button class="item profile-option" onclick="entrarComo('produtor')">
+          <span class="profile-avatar" aria-hidden="true">MO</span>
+          <span class="profile-copy"><b>Marcos Oliveira</b><span class="sub">Produtor rural</span><span class="profile-hint">Seus pedidos e propriedades</span></span>
+          <span class="profile-arrow" aria-hidden="true">→</span>
+        </button>
+        <button class="item profile-option" onclick="entrarComo('tecnico')">
+          <span class="profile-avatar technician" aria-hidden="true">AL</span>
+          <span class="profile-copy"><b>Ana Lima</b><span class="sub">Técnica agrônoma</span><span class="profile-hint">Agende visitas e atenda pedidos</span></span>
+          <span class="profile-arrow" aria-hidden="true">→</span>
+        </button>
+      </div>
+
+      <div id="form-cadastro" class="tela hidden">
+        <div><label for="cad-nome">Nome completo</label><input id="cad-nome"></div>
+        <div><label for="cad-email">E-mail</label><input id="cad-email" type="email"></div>
+        <div>
+          <label for="cad-perfil">Perfil</label>
+          <select id="cad-perfil">
+            <option value="produtor">Produtor Rural</option>
+            <option value="tecnico">Técnico Agrônomo</option>
+          </select>
+        </div>
+        <label class="consent-label" for="cad-lgpd">
+          <input id="cad-lgpd" type="checkbox">
+          Autorizo o uso dos meus dados para atendimento, conforme a LGPD.
+        </label>
+        <div class="err" id="cad-err" role="alert" aria-live="polite"></div>
+        <button class="btn" onclick="cadastrar()">Criar conta</button>
+      </div>
+    </main>
+
+    <!-- TELA 2: LISTA DE SOLICITAÇÕES (muda conforme o perfil) -->
+    <main id="tela-lista" class="body tela hidden">
+      <button id="btn-nova" class="btn" onclick="mostrar('tela-nova')">Pedir ajuda técnica</button>
+      <div class="stats" id="stats"></div>
+      <h2 id="titulo-lista" class="section-title"></h2>
+      <div id="lista" class="tela"></div>
+    </main>
+
+    <!-- TELA 3: NOVA SOLICITAÇÃO (Produtor) -->
+    <main id="tela-nova" class="body tela hidden">
+      <button class="btn alt btn-back" onclick="mostrar('tela-lista')">← Voltar</button>
+      <h2 class="section-title">Pedir ajuda técnica</h2>
+      <div>
+        <label for="nv-prop">Propriedade</label>
+        <select id="nv-prop">
+          <option>Sítio Boa Esperança (4 ha, hortaliças)</option>
+          <option>Fazenda Santa Clara (38 ha, soja e milho)</option>
+        </select>
+      </div>
+      <div><label for="nv-tema">Sobre o que precisa de ajuda?</label><input id="nv-tema" placeholder="Ex.: pragas nas folhas"></div>
+      <div><label for="nv-desc">Conte o que aconteceu</label><textarea id="nv-desc"></textarea></div>
+      <div>
+        <label for="nv-urg">Qual é a urgência?</label>
+        <select id="nv-urg">
+          <option>Baixa</option>
+          <option selected>Média</option>
+          <option>Alta</option>
+        </select>
+      </div>
+      <div class="err" id="nv-err" role="alert" aria-live="polite"></div>
+      <button class="btn" onclick="enviarSolicitacao()">Enviar pedido</button>
+    </main>
+
+    <!-- TELA 4: DETALHE DA SOLICITAÇÃO (Produtor e Técnico) -->
+    <main id="tela-detalhe" class="body tela hidden">
+      <button class="btn alt btn-back" onclick="mostrar('tela-lista')">← Voltar</button>
+
+      <div>
+        <h2 id="d-tema" class="section-title"></h2>
+        <div id="d-prop" class="sub"></div>
+      </div>
+      <p id="d-desc"></p>
+
+      <!-- Linha do tempo: os 5 status do ciclo de vida -->
+      <ul class="tl" id="d-tl">
+        <li><i></i>Aberta</li>
+        <li><i></i>Agendada<span id="d-data"></span></li>
+        <li><i></i>Em atendimento</li>
+        <li><i></i>Concluída</li>
+        <li><i></i>Avaliada</li>
+      </ul>
+
+      <div id="d-rel" class="note hidden"></div>
+
+      <!-- Ações do TÉCNICO (só uma aparece por vez, conforme o status) -->
+      <div id="acao-agendar" class="acao tela hidden">
+        <div><label for="d-dt">Data da visita</label><input id="d-dt" type="date"></div>
+        <button class="btn" onclick="agendar()">Agendar visita</button>
+      </div>
+      <div id="acao-iniciar" class="acao tela hidden">
+        <button class="btn" onclick="iniciar()">Iniciar atendimento</button>
+      </div>
+      <div id="acao-concluir" class="acao tela hidden">
+        <div><label for="d-relatorio">O que foi feito no atendimento?</label><textarea id="d-relatorio"></textarea></div>
+        <button class="btn" onclick="concluir()">Concluir atendimento</button>
+      </div>
+
+      <!-- Ação do PRODUTOR (só depois de Concluída) -->
+      <div id="acao-avaliar" class="acao tela hidden">
+        <div>
+          <span class="field-label">Avalie o atendimento</span>
+          <div class="stars" id="estrelas" role="group" aria-label="Avalie o atendimento">
+            <button aria-label="1 estrela" onclick="escolherNota(1)">★</button>
+            <button aria-label="2 estrelas" onclick="escolherNota(2)">★</button>
+            <button aria-label="3 estrelas" onclick="escolherNota(3)">★</button>
+            <button aria-label="4 estrelas" onclick="escolherNota(4)">★</button>
+            <button aria-label="5 estrelas" onclick="escolherNota(5)">★</button>
+          </div>
+        </div>
+        <div><label for="d-comentario">Comentário (opcional)</label><textarea id="d-comentario"></textarea></div>
+        <button class="btn" onclick="avaliar()">Enviar avaliação</button>
+      </div>
+
+      <div id="d-aviso" class="note hidden" role="status" aria-live="polite"></div>
+      <div class="err" id="d-err" role="alert" aria-live="polite"></div>
+    </main>
+
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
