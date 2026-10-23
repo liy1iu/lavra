@@ -31,35 +31,31 @@
   <p>Documentação do sistema. Os diagramas usam os mesmos atores, entidades e status do protótipo e do resumo.</p>
 
   <h2>1. Casos de uso</h2>
-  <p>Quem faz o quê. O produtor avalia depois da conclusão, e produtor ou técnico podem cancelar antes dela.</p>
+  <p>Quem faz o quê. Produtor e técnico podem cancelar antes da conclusão; o fluxo aparece em mais detalhe nos diagramas de estados e sequência.</p>
   <div class="box"><pre class="mermaid">
 flowchart LR
   P["Produtor Rural"]
   T["Técnico Agrônomo"]
   subgraph L["Sistema Lavra"]
-    direction TB
     U1(["Cadastrar-se e entrar"])
     U2(["Abrir solicitação"])
-    U3(["Acompanhar status"])
+    U3(["Acompanhar ou cancelar solicitação"])
     U4(["Avaliar atendimento"])
-    U5(["Ver solicitações recebidas"])
+    U5(["Ver ou cancelar solicitações recebidas"])
     U6(["Agendar visita"])
     U7(["Atualizar status"])
     U8(["Registrar relatório"])
-    U9(["Cancelar atendimento"])
   end
   P --- U1
   P --- U2
   P --- U3
   P --- U4
-  P --- U9
   T --- U1
   T --- U5
   T --- U6
   T --- U7
   T --- U8
-  T --- U9
-  linkStyle default interpolate linear
+  U4 -. "só após Concluída" .-> U7
   </pre></div>
 
   <h2>2. Modelo de dados (DER)</h2>
