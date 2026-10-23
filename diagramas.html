@@ -37,6 +37,7 @@ flowchart LR
   P["Produtor Rural"]
   T["Técnico Agrônomo"]
   subgraph L["Sistema Lavra"]
+    direction TB
     U1(["Cadastrar-se e entrar"])
     U2(["Abrir solicitação"])
     U3(["Acompanhar status"])
@@ -51,14 +52,14 @@ flowchart LR
   P --- U2
   P --- U3
   P --- U4
+  P --- U9
   T --- U1
   T --- U5
   T --- U6
   T --- U7
   T --- U8
-  P --- U9
   T --- U9
-  U4 -. "só após Concluída" .-> U7
+  linkStyle default interpolate linear
   </pre></div>
 
   <h2>2. Modelo de dados (DER)</h2>
