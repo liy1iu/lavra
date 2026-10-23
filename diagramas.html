@@ -45,46 +45,46 @@ flowchart LR
   </pre></div>
 
   <h2>2. Modelo de dados (DER)</h2>
-  <p>Quatro entidades. Usuário representa Produtor ou Técnico, definido pelo atributo perfil. Cada solicitação tem no máximo uma avaliação.</p>
+  <p>Usuário guarda os dados de acesso e o perfil (produtor ou técnico). Cada solicitação é aberta por um produtor, ligada a uma propriedade, e pode ter um técnico atribuído. Cada solicitação tem no máximo uma avaliação. Regra de negócio: apenas usuários com perfil técnico podem ser atribuídos a uma solicitação.</p>
   <div class="box"><pre class="mermaid">
 erDiagram
   USUARIO ||--o{ PROPRIEDADE : possui
-  USUARIO ||--o{ SOLICITACAO : abre
-  USUARIO |o--o{ SOLICITACAO : atende
+  USUARIO ||--o{ SOLICITACAO : "abre (produtor)"
+  USUARIO |o--o{ SOLICITACAO : "atende (técnico)"
   PROPRIEDADE ||--o{ SOLICITACAO : origina
   SOLICITACAO ||--o| AVALIACAO : recebe
   USUARIO {
-    int id PK
-    string nome
-    string email UK
-    string perfil
+    int id_usuario PK
+    varchar nome
+    varchar email UK
+    varchar perfil "produtor ou técnico"
     boolean consentimento_lgpd
   }
   PROPRIEDADE {
-    int id PK
-    string nome
+    int id_propriedade PK
+    varchar nome
     decimal area_ha
-    string cultura
-    int produtor_id FK
+    varchar cultura
+    int id_produtor FK
   }
   SOLICITACAO {
-    int id PK
-    string assunto
-    string descricao
-    string urgencia
-    string status
+    int id_solicitacao PK
+    varchar assunto
+    text descricao
+    varchar urgencia
+    varchar status
     date data_visita
-    string relatorio
-    int propriedade_id FK
-    int produtor_id FK
-    int tecnico_id FK
+    text relatorio
+    int id_propriedade FK
+    int id_produtor FK
+    int id_tecnico FK
   }
   AVALIACAO {
-    int id PK
+    int id_avaliacao PK
     int nota
-    string comentario
+    text comentario
     datetime criada_em
-    int solicitacao_id FK
+    int id_solicitacao FK
   }
   </pre></div>
 
