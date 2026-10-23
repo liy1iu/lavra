@@ -14,7 +14,7 @@
   <a href="diagramas.html">Documentação ›</a>
 </div>
 
-<!-- CABEÇALHO: a logo sempre leva ao início -->
+<!-- cabeçalho: a logo sempre leva ao início -->
 <header class="topo" id="topo">
   <div class="topo-in">
     <button class="logo-btn" onclick="irInicio()" aria-label="Lavra: voltar ao início">
@@ -27,21 +27,19 @@
         <span class="papel" id="u-papel"></span>
       </div>
     </div>
+    <a class="doc-link" href="diagramas.html">Documentação<span data-ic="chevron"></span></a>
     <button class="btn-sair hidden" id="btn-sair" onclick="sair()"><span data-ic="logout"></span>Sair</button>
   </div>
 </header>
+<div class="offline hidden" id="offline" role="status">Sem internet. O que você fizer fica salvo neste aparelho.</div>
 
 <main class="conteudo">
 
-  <!-- TELA 1: ENTRADA -->
+  <!-- tela 1: entrada -->
   <section id="tela-login" class="tela login">
     <div class="hero">
-      <svg class="hero-aneis" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <circle cx="200" cy="200" r="70"/><circle cx="200" cy="200" r="115"/>
-        <circle cx="200" cy="200" r="160"/><circle cx="200" cy="200" r="205"/>
-        <circle cx="200" cy="200" r="250"/>
-      </svg>
-      <img class="hero-logo" src="assets/lavraLogoBranca.svg" alt="">
+      <img class="hero-foto" src="assets/fotos/agricultor.webp" width="1078" height="716" alt="" fetchpriority="high" decoding="async">
+      <svg class="hero-arcos" viewBox="0 0 400 400" aria-hidden="true"><circle cx="0" cy="400" r="120"/><circle cx="0" cy="400" r="200"/><circle cx="0" cy="400" r="290"/></svg>
       <div class="hero-txt">
         <h1>Assistência técnica ao alcance do campo</h1>
         <p>Peça, acompanhe e avalie a assistência técnica da sua propriedade.</p>
@@ -75,19 +73,19 @@
         <fieldset>
           <legend>Você é</legend>
           <div class="opcoes">
-            <label class="opcao"><input type="radio" name="perfil" value="produtor" checked><span>Produtor rural</span></label>
-            <label class="opcao"><input type="radio" name="perfil" value="tecnico"><span>Técnico agrônomo</span></label>
+            <label class="opcao"><input type="radio" name="perfil" value="produtor" checked><span><span data-ic="user"></span>Produtor rural</span></label>
+            <label class="opcao"><input type="radio" name="perfil" value="tecnico"><span><span data-ic="sprout"></span>Técnico agrônomo</span></label>
           </div>
         </fieldset>
         <label class="lgpd"><input id="cad-lgpd" type="checkbox"><span>Autorizo o uso dos meus dados para atendimento, conforme a LGPD.</span></label>
         <div class="err" id="cad-err"></div>
-        <button class="btn btn-acao" onclick="cadastrar()">Criar conta e entrar</button>
-        <p class="nota">Protótipo: nenhum dado é salvo.</p>
+        <button class="btn btn-acao" onclick="cadastrar()">Criar conta e entrar<span data-ic="seta"></span></button>
+        <p class="nota">Protótipo: os dados ficam salvos só neste aparelho.</p>
       </div>
     </div>
   </section>
 
-  <!-- TELA 2: LISTA (muda conforme o perfil) -->
+  <!-- tela 2: lista (muda conforme o perfil) -->
   <section id="tela-lista" class="tela hidden">
     <h1 id="titulo-lista"></h1>
     <button id="btn-nova" class="btn btn-acao" onclick="mostrar('tela-nova')"><span data-ic="plus"></span>Pedir ajuda técnica</button>
@@ -96,18 +94,19 @@
     <div class="cards" id="lista"></div>
   </section>
 
-  <!-- TELA 3: NOVO PEDIDO (Produtor) -->
+  <!-- tela 3: novo pedido (produtor) -->
   <section id="tela-nova" class="tela hidden estreita">
     <div class="linha-voltar">
       <button class="voltar" onclick="mostrar('tela-lista')"><span data-ic="voltar"></span>Voltar</button>
       <h1>Pedir ajuda técnica</h1>
     </div>
+    <img class="capa" src="assets/fotos/folhas.webp" width="1078" height="804" alt="" loading="lazy" decoding="async">
     <fieldset class="pilha">
       <legend>Qual propriedade?</legend>
       <label class="cartao-opcao"><input type="radio" name="prop" value="Sítio Boa Esperança (4 ha, hortaliças)" checked>
-        <span class="corpo"><span class="rd"></span><span><b>Sítio Boa Esperança</b><small>4 ha · hortaliças</small></span></span></label>
+        <span class="corpo"><span class="rd"></span><img class="mini" src="assets/fotos/hortalicas.webp" width="1079" height="715" alt="" loading="lazy"><span><b>Sítio Boa Esperança</b><small>4 ha · hortaliças</small></span></span></label>
       <label class="cartao-opcao"><input type="radio" name="prop" value="Fazenda Santa Clara (38 ha, soja e milho)">
-        <span class="corpo"><span class="rd"></span><span><b>Fazenda Santa Clara</b><small>38 ha · soja e milho</small></span></span></label>
+        <span class="corpo"><span class="rd"></span><img class="mini" src="assets/fotos/paisagem.webp" width="1078" height="809" alt="" loading="lazy"><span><b>Fazenda Santa Clara</b><small>38 ha · soja e milho</small></span></span></label>
     </fieldset>
     <div><label for="nv-tema">O que precisa de ajuda?</label><input id="nv-tema" type="text" placeholder="Ex.: pragas nas folhas"></div>
     <div><label for="nv-desc">Descreva o problema</label><textarea id="nv-desc" placeholder="Conte o que está vendo e há quanto tempo"></textarea></div>
@@ -123,13 +122,14 @@
     <div class="barra-fixa"><button class="btn btn-acao" onclick="enviarSolicitacao()">Enviar pedido</button></div>
   </section>
 
-  <!-- TELA 4: DETALHE (Produtor e Técnico) -->
+  <!-- tela 4: detalhe (produtor e técnico) -->
   <section id="tela-detalhe" class="tela hidden">
     <div class="linha-voltar">
       <button class="voltar" onclick="mostrar('tela-lista')"><span data-ic="voltar"></span><span id="voltar-txt">Pedidos</span></button>
     </div>
     <div class="det-grid">
       <div class="pilha">
+        <img class="capa" id="d-capa" src="" width="1078" height="716" alt="" decoding="async">
         <h1 id="d-tema"></h1>
         <p class="local" id="d-prop"></p>
         <div class="chips" id="d-chips"></div>
@@ -138,7 +138,7 @@
         <div class="card verde hidden" id="d-rel"></div>
       </div>
 
-      <!-- Ações: só uma aparece por vez, conforme perfil e status -->
+      <!-- ações: só uma aparece por vez, conforme perfil e status -->
       <aside class="det-acoes">
         <div class="pilha">
           <div id="acao-agendar" class="acao pilha hidden">
