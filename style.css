@@ -39,6 +39,8 @@ button{cursor:pointer}
 .logo-btn img{display:block;height:2.6rem;width:auto}
 .btn-sair{grid-area:sair;display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:0 1rem;background:transparent;color:#fff;border:2px solid #fff;border-radius:.8rem;font-weight:700}
 .btn-sair:hover{background:rgba(255,255,255,.16)}
+.btn-cancelar{min-height:3rem;padding:.6rem 1rem;background:#fff;color:var(--err);border:2px solid var(--err);border-radius:.8rem;font-weight:700}
+.btn-cancelar:hover{background:#FCE8E6}
 .usuario{grid-area:user;display:flex;align-items:center;gap:.8rem;margin-top:.7rem}
 .nome{font-weight:800;font-size:1.15rem;line-height:1.2}
 .avatar{width:2.9rem;height:2.9rem;border-radius:50%;display:grid;place-items:center;font-weight:800;border:3px solid #fff;flex:none}
@@ -163,6 +165,8 @@ textarea{min-height:8rem;resize:vertical}
 .tl li:not(:last-child)::after{content:"";position:absolute;left:.86rem;top:2.45rem;bottom:-.55rem;width:3px;background:#C3CDBF}
 .tl li.feito:not(:last-child)::after{background:var(--acao)}
 .tl li.feito,.tl li.atual{color:var(--ink)}
+.tl li.cancelado{color:var(--err)}
+.tl li.cancelado .pt{border-color:var(--err);color:var(--err);font-weight:800}
 .pt{display:grid;place-items:center;width:1.9rem;height:1.9rem;flex:none;z-index:1;background:#fff;border:3px solid #9BA99E;border-radius:50%;color:#fff}
 .pt .ic{width:1.1rem;height:1.1rem}
 .feito .pt{background:var(--acao);border-color:var(--acao)}

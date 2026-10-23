@@ -1,5 +1,4 @@
-
-var VERSAO = "lavra-v1";
+var VERSAO = "lavra-v2";
 var BASE = [
   "./",
   "index.html",

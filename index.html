@@ -136,6 +136,7 @@
         <div class="card" id="d-relato"></div>
         <ol class="tl" id="d-tl"></ol>
         <div class="card verde hidden" id="d-rel"></div>
+        <div class="card verde hidden" id="d-comentario-card"></div>
       </div>
 
       <!-- ações: só uma aparece por vez, conforme perfil e status -->
@@ -156,8 +157,11 @@
           <div id="acao-avaliar" class="acao pilha hidden">
             <div class="estrelas" id="estrelas"></div>
             <p class="nota-txt" id="nota-txt"></p>
+            <div><label for="d-comentario">Comentário sobre o atendimento (opcional)</label>
+            <textarea id="d-comentario" maxlength="500" placeholder="Conte como foi sua experiência"></textarea></div>
             <button class="btn btn-acao" onclick="avaliar()">Enviar avaliação</button>
           </div>
+          <button id="acao-cancelar" class="btn btn-cancelar hidden" onclick="cancelarAtendimento()">Cancelar atendimento</button>
           <div class="card hidden" id="d-aviso"></div>
           <div class="err" id="d-err"></div>
         </div>

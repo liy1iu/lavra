@@ -6,6 +6,20 @@
   <title>Lavra: diagramas</title>
   <link rel="icon" type="image/svg+xml" href="assets/lavraLogoVerde.svg">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .tabela{width:100%;border-collapse:collapse;font-size:1rem;text-align:left}
+    .tabela th,.tabela td{padding:.6rem .75rem;border-bottom:1px solid var(--line);vertical-align:top}
+    .tabela th{background:var(--bg);font-weight:700}
+    .tabela td:first-child{font-weight:700;white-space:nowrap}
+    .tabela tr:last-child td{border-bottom:0}
+    .duas{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));margin-bottom:2rem}
+    .duas .box{margin:0}
+    .box h3{margin-bottom:.5rem;font-size:1.1rem}
+    .box ul{margin:0;padding-left:1.25rem}
+    .box li{margin-bottom:.35rem}
+    .box p{margin:0}
+    .refs p{margin:0 0 .75rem}
+  </style>
 </head>
 <body>
 <div class="doc">
@@ -17,7 +31,7 @@
   <p>Documentação do sistema. Os diagramas usam os mesmos atores, entidades e status do protótipo e do resumo.</p>
 
   <h2>1. Casos de uso</h2>
-  <p>Quem faz o quê. A avaliação é exclusiva do Produtor e depende da conclusão do atendimento.</p>
+  <p>Quem faz o quê. O produtor avalia depois da conclusão, e produtor ou técnico podem cancelar antes dela.</p>
   <div class="box"><pre class="mermaid">
 flowchart LR
   P["Produtor Rural"]
@@ -31,6 +45,7 @@ flowchart LR
     U6(["Agendar visita"])
     U7(["Atualizar status"])
     U8(["Registrar relatório"])
+    U9(["Cancelar atendimento"])
   end
   P --- U1
   P --- U2
@@ -41,11 +56,13 @@ flowchart LR
   T --- U6
   T --- U7
   T --- U8
+  P --- U9
+  T --- U9
   U4 -. "só após Concluída" .-> U7
   </pre></div>
 
   <h2>2. Modelo de dados (DER)</h2>
-  <p>Usuário guarda os dados de acesso e o perfil (produtor ou técnico). Cada solicitação é aberta por um produtor, ligada a uma propriedade, e pode ter um técnico atribuído. Cada solicitação tem no máximo uma avaliação. Regra de negócio: apenas usuários com perfil técnico podem ser atribuídos a uma solicitação.</p>
+  <p>Usuário guarda os dados de acesso e o perfil (produtor ou técnico). Cada solicitação é aberta por um produtor, ligada a uma propriedade, e pode ter um técnico atribuído. Cada solicitação tem no máximo uma avaliação. Regra de negócio: apenas usuários com perfil técnico podem ser atribuídos a uma solicitação. No protótipo, as propriedades são duas opções de exemplo; o cadastro de propriedade fica para depois do MVP.</p>
   <div class="box"><pre class="mermaid">
 erDiagram
   USUARIO ||--o{ PROPRIEDADE : possui
@@ -89,7 +106,7 @@ erDiagram
   </pre></div>
 
   <h2>3. Estados da solicitação</h2>
-  <p>Ciclo de vida que sustenta as regras de negócio. Não é possível pular etapas nem voltar.</p>
+  <p>Ciclo de vida da solicitação. O atendimento pode ser cancelado antes da conclusão.</p>
   <div class="box"><pre class="mermaid">
 stateDiagram-v2
   [*] --> Aberta : Produtor envia
@@ -97,13 +114,17 @@ stateDiagram-v2
   Agendada --> EmAtendimento : Técnico inicia
   EmAtendimento --> Concluida : Técnico registra relatório
   Concluida --> Avaliada : Produtor envia nota
+  Aberta --> Cancelada : Produtor ou técnico cancela
+  Agendada --> Cancelada : Produtor ou técnico cancela
+  EmAtendimento --> Cancelada : Produtor ou técnico cancela
   Avaliada --> [*]
+  Cancelada --> [*]
   EmAtendimento : Em atendimento
   Concluida : Concluída
   </pre></div>
 
   <h2>4. Fluxo principal (sequência)</h2>
-  <p>Da abertura da solicitação até a avaliação final, como no protótipo.</p>
+  <p>Fluxo principal, incluindo cancelamento e avaliação com comentário opcional.</p>
   <div class="box"><pre class="mermaid">
 sequenceDiagram
   actor P as Produtor
@@ -112,14 +133,125 @@ sequenceDiagram
   P->>L: Abre solicitação com propriedade, assunto e descrição
   L-->>P: Status Aberta
   T->>L: Consulta solicitações recebidas
-  T->>L: Agenda visita
-  L-->>P: Status Agendada
-  T->>L: Inicia atendimento
-  T->>L: Conclui com relatório
-  L-->>P: Status Concluída e avaliação liberada
-  P->>L: Envia nota e comentário
-  L-->>T: Status Avaliada
+  alt Atendimento segue
+    T->>L: Agenda visita
+    L-->>P: Status Agendada
+    T->>L: Inicia atendimento
+    T->>L: Conclui com relatório
+    L-->>P: Status Concluída e avaliação liberada
+    P->>L: Envia nota e comentário opcional
+    L-->>T: Status Avaliada
+  else Produtor ou técnico cancela antes da conclusão
+    alt Produtor cancela
+      P->>L: Cancela atendimento
+    else Técnico cancela
+      T->>L: Cancela atendimento
+    end
+    L-->>P: Status Cancelada
+    L-->>T: Status Cancelada
+  end
   </pre></div>
+
+  <h2>5. Componentes e arquitetura</h2>
+  <p>Organização do protótipo (aplicação web que funciona também no celular). Em produção, a persistência local seria trocada por uma API com banco de dados relacional seguindo o DER.</p>
+  <div class="box"><pre class="mermaid">
+flowchart TB
+  subgraph APR["Apresentação"]
+    H["index.html: as 4 telas"]
+    C["style.css: layout responsivo e acessível"]
+  end
+  subgraph LOG["Lógica (script.js)"]
+    A["Acesso: cadastrar, entrar, sair"]
+    S["Solicitações: criar, listar, filtrar"]
+    R["Regras de negócio: tabela de transições e validações"]
+    V["Avaliação: nota e comentário"]
+  end
+  subgraph DAD["Persistência"]
+    LS[("localStorage: contas e solicitações")]
+  end
+  SW["sw.js: cache e modo offline"]
+  H --> A
+  H --> S
+  H --> V
+  A --> R
+  S --> R
+  V --> R
+  R --> LS
+  SW -. "guarda as telas para uso sem internet" .-> H
+  </pre></div>
+
+  <h2>6. Regras de negócio</h2>
+  <p>Aplicadas dentro de cada ação do protótipo.</p>
+  <div class="box">
+    <ul>
+      <li>Só o técnico agenda, inicia e conclui o atendimento. Só o produtor avalia, depois de concluído.</li>
+      <li>O produtor ou o técnico pode cancelar o atendimento enquanto estiver aberto, agendado ou em andamento.</li>
+      <li>O fluxo segue: Aberta, Agendada, Em atendimento, Concluída e Avaliada; antes da conclusão, pode terminar como Cancelada.</li>
+      <li>Para concluir é obrigatório o relatório, e a data da visita não pode estar no passado.</li>
+      <li>Cada solicitação concluída recebe uma avaliação do produtor, com nota de 1 a 5 e comentário opcional.</li>
+      <li>O produtor vê só os próprios pedidos. O técnico vê os sem técnico e os que ele atende.</li>
+      <li>O cadastro exige o aceite do uso dos dados (LGPD), que fica registrado.</li>
+    </ul>
+  </div>
+
+  <h2>7. Escopo do MVP e validação</h2>
+  <p>O MVP entrega o ciclo completo de uma solicitação. O restante fica para as próximas versões.</p>
+  <div class="duas">
+    <div class="box">
+      <h3>Entra no MVP</h3>
+      <ul>
+        <li>Cadastro com aceite da LGPD</li>
+        <li>Abertura de solicitação</li>
+        <li>Agendamento, atendimento e relatório</li>
+        <li>Acompanhamento do status</li>
+        <li>Avaliação com nota e comentário</li>
+        <li>Funcionamento sem internet</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Fica para depois</h3>
+      <ul>
+        <li>Cadastro de propriedades</li>
+        <li>Login com senha</li>
+        <li>Banco de dados e API</li>
+        <li>Envio de fotos da lavoura</li>
+        <li>Notificações</li>
+        <li>Painel de indicadores</li>
+      </ul>
+    </div>
+  </div>
+  <div class="box">
+    <h3>Como validar com usuários</h3>
+    <ul>
+      <li><b>Quem:</b> um grupo pequeno de produtores rurais e de técnicos agrônomos.</li>
+      <li><b>Como:</b> cada pessoa usa o protótipo para abrir, atender ou avaliar um pedido. Medimos se conclui sem ajuda, o tempo, os erros e a satisfação (por exemplo, com o questionário SUS).</li>
+      <li><b>Decisão:</b> os problemas encontrados definem a próxima versão, antes de construir banco de dados e login real.</li>
+    </ul>
+  </div>
+
+  <h2>8. Qualidade, segurança e privacidade (ISO/IEC 25010)</h2>
+  <p>O que o protótipo já faz em cada ponto.</p>
+  <div class="box"><table class="tabela">
+    <thead><tr><th>Característica</th><th>Cuidado no protótipo</th></tr></thead>
+    <tbody>
+      <tr><td>Segurança</td><td>Textos digitados são tratados antes de aparecer na tela. O acesso é simulado e os dados ficam no aparelho, sem criptografia.</td></tr>
+      <tr><td>Privacidade (LGPD)</td><td>Aceite obrigatório e registrado, coleta mínima (nome e e-mail) e dados de exemplo fictícios.</td></tr>
+      <tr><td>Usabilidade</td><td>Uma ação principal por tela, botões grandes, pensado primeiro para celular.</td></tr>
+      <tr><td>Acessibilidade</td><td>Foco visível no teclado, rótulos nos campos e nas estrelas, idioma da página definido.</td></tr>
+      <tr><td>Manutenção</td><td>Telas, estilo e lógica em arquivos separados. As regras de transição ficam em uma única tabela no código.</td></tr>
+      <tr><td>Confiabilidade</td><td>Funciona sem internet, com aviso na tela.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Em produção: autenticação real, senha protegida, HTTPS, banco de dados com cópia de segurança e testes automatizados.</p>
+
+  <h2>Referências</h2>
+  <div class="box refs">
+    <p>BOLFE, Edson Luis; JORGE, Lúcio André de Castro; SANCHES, Ieda Del’Arco. Tendências, desafios e oportunidades da Agricultura Digital no Brasil. <b>Revista Eletrônica Competências Digitais para Agricultura Familiar</b>, Tupã, v. 7, n. 2, p. 15-36, 2021.</p>
+    <p>BUAINAIN, A. M.; CAVALCANTE, P.; CONSOLINE, L. <b>Estado atual da agricultura digital no Brasil</b>: inclusão dos agricultores familiares e pequenos produtores rurais. Documentos de Projetos (LC/TS.2021/61). Santiago: CEPAL, 2021.</p>
+    <p>ISO/IEC. <b>ISO/IEC 25010:2023</b> - Systems and software engineering: Systems and software Quality Requirements and Evaluation (SQuaRE): Product quality model. Geneva: ISO, 2023.</p>
+    <p>KAPP, Cláudio. <b>Gestão de propriedades rurais</b>. 1. ed. São Carlos: Cubo, 2021.</p>
+    <p>PRESSMAN, Roger S.; MAXIM, Bruce R. <b>Engenharia de Software</b>: uma abordagem profissional. 9. ed. Porto Alegre: AMGH, 2021.</p>
+  </div>
 </div>
 
 <!-- mermaid usado para mostrar os diagramas (precisa de internet) -->

@@ -4,9 +4,9 @@ var rascunho = {};
 var FOTOS = { "Sítio Boa Esperança": "hortalicas", "Fazenda Santa Clara": "paisagem" };
 function foto(s) { return "assets/fotos/" + (FOTOS[s.prop.split(" (")[0]] || "paisagem") + ".webp"; }
 var STATUS = ["Aberta", "Agendada", "Em atendimento", "Concluída", "Avaliada"];
-var GRUPO = { "Aberta": "ouro", "Agendada": "azul", "Em atendimento": "azul", "Concluída": "verde", "Avaliada": "verde" };
-var ICONE = { "Aberta": "clock", "Agendada": "calendar", "Em atendimento": "clock", "Concluída": "check", "Avaliada": "check" };
-var GRUPOS = [["Aberta"], ["Agendada", "Em atendimento"], ["Concluída", "Avaliada"]];
+var GRUPO = { "Aberta": "ouro", "Agendada": "azul", "Em atendimento": "azul", "Concluída": "verde", "Avaliada": "verde", "Cancelada": "ouro" };
+var ICONE = { "Aberta": "clock", "Agendada": "calendar", "Em atendimento": "clock", "Concluída": "check", "Avaliada": "check", "Cancelada": "clock" };
+var GRUPOS = [["Aberta"], ["Agendada", "Em atendimento"], ["Concluída", "Avaliada", "Cancelada"]];
 var NOTAS = ["", "Ruim", "Regular", "Bom", "Muito bom", "Excelente"];
 
 var usuarios = {
@@ -37,6 +37,7 @@ function carregar() {
     var dados = JSON.parse(localStorage.getItem(CHAVE) || "null");
     if (!dados || !Array.isArray(dados.solicitacoes)) return;
     solicitacoes = dados.solicitacoes;
+    solicitacoes.forEach(function (s) { if (typeof s.comentario !== "string") s.comentario = ""; });
     rascunho = dados.rascunho && typeof dados.rascunho === "object" ? dados.rascunho : {};
     if (Object.prototype.hasOwnProperty.call(usuarios, dados.perfil)) {
       estado.perfil = dados.perfil;
@@ -89,6 +90,7 @@ function etapaTxt(s) {
   if (s.status === "Agendada") return t + "visita em " + dataBR(s.data);
   if (s.status === "Em atendimento") return t + "em atendimento";
   if (s.status === "Concluída") return t + "concluída";
+  if (s.status === "Cancelada") return "Atendimento cancelado";
   return t + "avaliada";
 }
 
@@ -183,7 +185,7 @@ function desenharLista() {
   });
   h = "";
   itens.forEach(function (s) {
-    var etapa = STATUS.indexOf(s.status) + 1, seg = "";
+    var etapa = s.status === "Cancelada" ? 5 : STATUS.indexOf(s.status) + 1, seg = "";
     for (var k = 1; k <= 5; k++) seg += '<i' + (k <= etapa ? ' class="on"' : '') + '></i>';
     h += '<button class="card-p" onclick="abrir(' + s.id + ')">' +
          '<img class="cp-foto" src="' + foto(s) + '" width="1078" height="716" alt="" loading="lazy" decoding="async">' +
@@ -199,6 +201,7 @@ function desenharLista() {
 function abrir(id) {
   estado.selecionada = id; estado.nota = 0;
   $("d-relatorio").value = rascunho["rel-" + id] || ""; $("d-dt").value = "";
+  $("d-comentario").value = atual().comentario || "";
   mostrar("tela-detalhe");
 }
 
@@ -210,7 +213,7 @@ function enviarSolicitacao() {
     id: solicitacoes.length + 1, produtor: usuarios.produtor.nome,
     prop: document.querySelector('input[name="prop"]:checked').value, tema: tema, desc: desc,
     urg: document.querySelector('input[name="urg"]:checked').value,
-    status: "Aberta", data: "", relatorio: "", nota: 0
+    status: "Aberta", data: "", relatorio: "", nota: 0, comentario: ""
   });
   delete rascunho["nv-tema"];
   delete rascunho["nv-desc"];
@@ -231,15 +234,21 @@ function desenharDetalhe() {
 
   // linha do tempo: feito = check, atual = anel
   var ativo = s.status === "Concluída" ? 4 : (s.status === "Avaliada" ? 5 : i), h = "";
+  if (s.status === "Cancelada") {
+    h = '<li class="cancelado atual"><span class="pt">×</span><span>Atendimento cancelado</span></li>';
+  } else {
   STATUS.forEach(function (nome, k) {
     var c = k < ativo ? "feito" : (k === ativo ? "atual" : "");
     h += '<li class="' + c + '"><span class="pt">' + (k < ativo ? ic("check") : "") + '</span><span>' + nome +
          (k === 1 && s.data && i >= 1 ? ' <small>visita em ' + dataBR(s.data) + '</small>' : "") + '</span></li>';
   });
+  }
   $("d-tl").innerHTML = h;
 
   $("d-rel").classList.toggle("hidden", !s.relatorio);
   $("d-rel").innerHTML = s.relatorio ? '<h3>' + ic("doc") + 'Relatório da técnica ' + usuarios.tecnico.nome + '</h3><p>' + esc(s.relatorio) + '</p>' : "";
+  $("d-comentario-card").classList.toggle("hidden", !s.comentario);
+  $("d-comentario-card").innerHTML = s.comentario ? '<h3>Comentário do produtor · avaliação ' + s.nota + '/5</h3><p>' + esc(s.comentario) + '</p>' : "";
 
   // ações: só uma por vez
   document.querySelectorAll(".acao").forEach(function (a) { a.classList.add("hidden"); });
@@ -249,12 +258,15 @@ function desenharDetalhe() {
     else if (s.status === "Agendada") $("acao-iniciar").classList.remove("hidden");
     else if (s.status === "Em atendimento") $("acao-concluir").classList.remove("hidden");
     else if (s.status === "Concluída") aviso = "Aguardando a avaliação do produtor.";
-    else aviso = "Avaliação recebida: " + s.nota + " de 5, " + NOTAS[s.nota].toLowerCase() + ".";
+    else if (s.status === "Avaliada") aviso = "Avaliação recebida: " + s.nota + " de 5, " + NOTAS[s.nota].toLowerCase() + ".";
+    else if (s.status === "Cancelada") aviso = "Este atendimento foi cancelado.";
   } else {
     if (s.status === "Concluída") { $("acao-avaliar").classList.remove("hidden"); desenharEstrelas(); }
     else if (s.status === "Avaliada") aviso = "Você avaliou com " + s.nota + " de 5. Obrigado!";
+    else if (s.status === "Cancelada") aviso = "Este atendimento foi cancelado.";
     else aviso = "A avaliação libera depois que a técnica concluir o atendimento.";
   }
+  $("acao-cancelar").classList.toggle("hidden", ["Concluída", "Avaliada", "Cancelada"].indexOf(s.status) >= 0);
   $("d-aviso").classList.toggle("hidden", !aviso);
   $("d-aviso").textContent = aviso;
   salvar();
@@ -270,6 +282,14 @@ function concluir() {
   var t = $("d-relatorio").value.trim();
   if (!t) { $("d-err").textContent = "Descreva o que foi orientado."; return; }
   var s = atual(); s.relatorio = t; s.status = "Concluída"; delete rascunho["rel-" + s.id]; desenharDetalhe();
+}
+function cancelarAtendimento() {
+  var s = atual();
+  if (!s || ["Concluída", "Avaliada", "Cancelada"].indexOf(s.status) >= 0) return;
+  if (!window.confirm("Deseja cancelar este atendimento?")) return;
+  s.status = "Cancelada";
+  desenharLista();
+  desenharDetalhe();
 }
 
 // ================= ação do produtor: avaliar (só após concluída) =================
@@ -289,7 +309,7 @@ function desenharEstrelas() {
 
 function avaliar() {
   if (!estado.nota) { $("d-err").textContent = "Escolha uma nota de 1 a 5."; return; }
-  var s = atual(); s.nota = estado.nota; s.status = "Avaliada"; desenharDetalhe();
+  var s = atual(); s.nota = estado.nota; s.comentario = $("d-comentario").value.trim(); s.status = "Avaliada"; desenharDetalhe();
 }
 
 function aviarRede() {
